@@ -1,0 +1,73 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Batch 4K Image Upscaler</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 2rem; background: #f9f9f9; }
+    h1 { font-size: 2rem; margin-bottom: 1rem; }
+    input[type="file"] { margin-bottom: 1rem; }
+    .preview { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; }
+    .image-box { border: 1px solid #ccc; padding: 0.5rem; background: #fff; }
+    button { margin-top: 1rem; padding: 0.5rem 1rem; font-size: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Batch 4K Image Upscaler (Client-side, Free)</h1>
+  <input type="file" id="imageInput" multiple accept="image/jpeg,image/png" />
+  <div class="preview" id="preview"></div>
+  <button id="downloadAll">Download All Upscaled (ZIP)</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script>
+    const input = document.getElementById('imageInput');
+    const preview = document.getElementById('preview');
+    const downloadAllBtn = document.getElementById('downloadAll');
+    const upscaleFactor = 2; // Change to 4 for 4x
+
+    const images = [];
+
+    input.addEventListener('change', async (event) => {
+      preview.innerHTML = '';
+      images.length = 0;
+
+      for (const file of event.target.files) {
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+
+        await new Promise((res) => img.onload = res);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width * upscaleFactor;
+        canvas.height = img.height * upscaleFactor;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        const imageBox = document.createElement('div');
+        imageBox.className = 'image-box';
+        imageBox.appendChild(canvas);
+        preview.appendChild(imageBox);
+
+        images.push({ name: file.name, dataURL: canvas.toDataURL('image/jpeg', 1.0) });
+      }
+    });
+
+    downloadAllBtn.addEventListener('click', async () => {
+      const zip = new JSZip();
+      for (const image of images) {
+        const base64 = image.dataURL.split(',')[1];
+        zip.file(image.name.replace(/\.[^/.]+$/, "_upscaled.jpg"), base64, { base64: true });
+      }
+      const content = await zip.generateAsync({ type: "blob" });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(content);
+      a.download = "upscaled_images.zip";
+      a.click();
+    });
+  </script>
+</body>
+</html>
