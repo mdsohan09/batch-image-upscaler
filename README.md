@@ -1,45 +1,79 @@
-# Batch 4K/8K Image Upscaler (Free, Client-side)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Batch 8x Image Upscaler</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
+    h1 { color: #333; }
+    input[type=file] { margin-bottom: 10px; }
+    canvas { display: none; }
+    .status { margin-top: 20px; }
+    .buttons { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Batch 8x Image Upscaler</h1>
+  <input type="file" id="fileInput" multiple accept="image/*">
+  <div class="buttons">
+    <button onclick="processImages()">Upscale All</button>
+    <button onclick="clearAll()">Clear All</button>
+  </div>
+  <div class="status" id="status"></div>
 
-This is a simple, browser-based image upscaler web app that allows you to upscale 20–30 images at once to 2x or 4x resolution with high quality. It works entirely on the client-side and requires no server or backend. Ideal for preparing images for Adobe Stock or other platforms.
+  <script>
+    function processImages() {
+      const input = document.getElementById('fileInput');
+      const status = document.getElementById('status');
+      const files = input.files;
+      if (!files.length) {
+        status.textContent = 'Please select images.';
+        return;
+      }
 
-## ✨ Features
+      const zip = new JSZip();
+      let processed = 0;
 
-- ✅ Batch Upload (20–30 images)
-- ✅ 2x Upscaling (can be configured to 4x)
-- ✅ JPG/PNG output at high resolution
-- ✅ 300 DPI compatible
-- ✅ Fast performance (uses HTML5 Canvas)
-- ✅ Download all upscaled images in a ZIP
-- ✅ 100% free and privacy-safe (no data uploaded)
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const img = new Image();
+          img.onload = function () {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width * 8;
+            canvas.height = img.height * 8;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-## 🛠 How to Use
+            canvas.toBlob(blob => {
+              zip.file(file.name.replace(/\.[^/.]+$/, '') + '_8x.jpg', blob);
+              processed++;
+              if (processed === files.length) {
+                zip.generateAsync({ type: 'blob' }).then(content => {
+                  const a = document.createElement('a');
+                  a.href = URL.createObjectURL(content);
+                  a.download = 'upscaled_images.zip';
+                  a.click();
+                  status.textContent = 'All images upscaled and downloaded.';
+                });
+              }
+            }, 'image/jpeg', 1.0); // Save at max quality (quality 12 equivalent)
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
 
-1. Clone or download this repo
-2. Open `index.html` in your browser to use locally
-3. Or deploy to:
-   - **GitHub Pages**
-   - **Netlify**
-   - **Vercel**
+    function clearAll() {
+      document.getElementById('fileInput').value = "";
+      document.getElementById('status').textContent = "All files cleared.";
+    }
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</body>
+</html>
 
-## 🖼 For Adobe Stock Upload
-To ensure your images are Adobe Stock ready:
-
-- Use high-quality original images
-- Avoid excessive blur, noise, or artifacts
-- Consider manual sharpening/denoising after upscaling
-- Save at 300 DPI (optional, based on platform requirement)
-
-## 📦 Deployment Guide (GitHub Pages)
-
-1. Create a GitHub repository
-2. Upload this project’s files (`index.html`, etc.)
-3. Go to **Settings → Pages**
-4. Select branch and folder (`/root`)
-5. Your app will be live at: `https://yourusername.github.io/repo-name`
-
-## ✅ License
-This project is released under the MIT License. You can use, modify, and distribute it freely.
-
----
-
-Built with ❤️ by ChatGPT
