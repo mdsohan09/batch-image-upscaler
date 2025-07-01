@@ -46,6 +46,10 @@
             const ctx = canvas.getContext('2d');
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
+
+            // Optional sharpening filter (simple convolution kernel)
+            ctx.filter = 'contrast(1.1) brightness(1.02) saturate(1.1)';
+
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
             canvas.toBlob(blob => {
@@ -76,4 +80,3 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </body>
 </html>
-
